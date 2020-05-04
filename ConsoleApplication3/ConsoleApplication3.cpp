@@ -3,10 +3,10 @@
 
 SceneID warehouse, livingroom, garret, workroom, door, bedroom, start, outside, ending1, ending2;
 ObjectID box, box2, bbaru1, bbaru2, bbaru, bedL[5], doorL[5], garretL[5], livingL[5], wareL[5], outsideobject, end1, end2, attack,
-workingL[5], button, letter, lighter, frame, pole, rock, key, box3, gate, gate2, gate3, doll1, frame2, enter, pennywize;
-SoundID bgm, children, scream, wood, man, clap;
+workingL[5], button, letter, lighter, frame, pole, rock, key, box3, gate, gate2, gate3, doll1, scary, enter, pennywize;
+SoundID bgm, children, scream, wood, man, clap, wind, grass, fight, hitwood, boxopen;
 TimerID timer1;
-bool power = true, handlighter = false, locked1 = true, locked2= true, locked3 = true, bbadda = true, move =false, show = true, show2=true;
+bool power = true, handlighter = false, locked1 = true, locked2= true, locked3 = true, bbadda = true, move =false, show = true, show2=true, show3 = true, show4=true, show5=true;
 int click=0, hit=0, touch=0, hit2=0, hit3=0;
 
 ObjectID createObject(const char* filename, SceneID scene, int x, int y, bool shown) {
@@ -145,18 +145,27 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		
 		if (getHandObject() == lighter) {
 			showImageViewer("편지지 글씨.png");
-			playSound(children, false);
 			show = false;
 
 		}
-		else if (show == true) {
+		else if (getHandObject() != lighter) {
+			showMessage("음...? 편지에 뭔가 묻어있네...?");
+		   if (show == true) {
 			playSound(children, false);
 			show = false;
-			showMessage("음...? 편지에 뭔가 묻어있네...?");
-			
+			doll1 = createObject("인형1.png", bedroom, 450, 80, true);
+			scaleObject(doll1, 0.8f);
 		}
+		}
+		
+		
 	}
 
+	else if (object == doll1) {
+	    hideObject(doll1);
+		playSound(children, false);
+	
+	}
 	else if (object == lighter) {
 		pickObject(lighter);
 		
@@ -164,25 +173,27 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 
 	else if (object == frame) {
 		showImageViewer("액자문제.png");
-		
-		
-		if(show2 == true) {
+
+		if (show2 == true) {
 			playSound(scream, false);
-		
 			show2 = false;
 		}
-
 	}
+
 
 	else if (object == box) {
 		if (locked1 == true) {
 			showKeypad("17593", box);
 			
 		}
-		else {
+		else if(locked1 == false && show5==true){
 			pickObject(bbaru1);
 			showMessage("빠루 반 쪽을 얻었다!");
+			show5 = false;
 
+		}
+		else if (show5 == false && locked1 ==false) {
+			showMessage("빈 상자다");
 		}
 	}
 
@@ -210,10 +221,17 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 }
 
 	else if (object == box2) {
-	if (getHandObject() == key) {
-		pickObject(bbaru2);
-		showMessage("빠루 반 쪽을 얻었다!");
-		locked2 = false;
+		if (getHandObject() == key) {
+			pickObject(bbaru2);
+			if (locked2 == true) {
+				showMessage("빠루 반 쪽을 얻었다!");
+				playSound(boxopen, false);
+				locked2 = false;
+			}
+		}
+		else if (locked2 == false) {
+			showMessage("빈 상자다");
+		
 	}
 	
 	else if (locked2 == true) {
@@ -224,8 +242,9 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 	else if (object == gate) {
 		if (getHandObject() == bbaru) {
 			hit += 1;
-			
-			if (hit >= 6) {
+			playSound(hitwood);
+
+			if (hit >= 12) {
 				hideObject(gate);
 				showObject(gate2);
 				playSound(wood, false);
@@ -250,16 +269,19 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 	else if (object == gate3) {
 	enterScene(outside);
 	showMessage("휴..... 탈출한건가?");
-	
+	stopSound(bgm);
+	playSound(wind, true);
 }
 
 	else if (object == outsideobject) {
 	hit2 += 1;
 	if (hit2 == 1) {
 	showMessage("(부스럭 부스럭)");
+	playSound(grass);
 	}
 	else if (hit2 == 2) {
 	showMessage("무슨소리지?");
+	stopSound(grass);
 	}
 	else if (hit2 == 3) {
 	setSceneImage(outside, "밖 페니.png");
@@ -274,6 +296,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 		showMessage("이제 탈출이다!!!");
 		enterScene(ending2);
 		playSound(clap, false);
+		stopSound(wind);
 		
 	}
 	
@@ -281,6 +304,7 @@ void mouseCallback(ObjectID object, int x, int y, MouseAction action) {
 
 	else if (object == attack) {
 	hit3 += 1;
+	playSound(fight);
 	if (hit3 >= 40) {
 		stopTimer(timer1);
 		showMessage("??? : 으윽...내가 당하다니...");
@@ -304,6 +328,7 @@ void timerCallback(TimerID timer) {
 		showMessage("죽여주마 낄낄낄낄낄낄");
 		playSound(man, false);
 		enterScene(ending1);
+		stopSound(wind);
 	}
 }
 
@@ -311,6 +336,7 @@ void timerCallback(TimerID timer) {
 void objectCallback(ObjectID object, EventID event) {
 	if (object == box) {
 		showMessage("상자가 열렸다!");
+		playSound(boxopen, false);
 		locked1 = false;
 	}
 }
@@ -321,6 +347,16 @@ int main() {
 	bgm = createSound("브금.mp3");
 
 	playSound(bgm, true);
+
+	hitwood = createSound("문 때리는 소리.mp3");
+
+	boxopen = createSound("상자소리.mp3");
+
+	wind = createSound("바람.mp3");
+
+	grass = createSound("풀소리.mp3");
+
+	fight = createSound("때리는 소리.mp3");
 
 	man = createSound("남자비명.mp3");
 	
@@ -376,12 +412,6 @@ int main() {
 
 	gate3 = createObject("열린문.png", door, 404, 35, false);
 
-	doll1 = createObject("인형1.png");
-	locateObject(doll1, bedroom, 450, 80);
-	scaleObject(doll1, 0.8f);
-
-	frame2 = createObject("무서운 사진.jpg", garret, 700, 330, false);
-	scaleObject(frame2, 0.45f);
 
 	bbaru1 = createObject("빠루 위.png");
 	bbaru2 = createObject("빠루 아래.png");
